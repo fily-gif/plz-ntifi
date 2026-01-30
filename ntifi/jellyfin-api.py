@@ -1,30 +1,44 @@
 from config import *
 import json
 import requests
-server = Jellyfin.server if Jellyfin.server.startswith(("http://", "https://")) else f"https://{Jellyfin.server}"
-#* assuming https
+server: str = Jellyfin.server if Jellyfin.server.startswith(("http://", "https://")) else f"https://{Jellyfin.server}"
+#* assuming https if no schema
 
+conf: list
 def auth(token:str=None, username=None, password=None):
-	# Takes in either `token`, or (`username` AND `password`).
-	# If only token provided (api key), tries to validate it via `GET /System/Info`. on fail, throws and screams.
-	# If only (`username` AND `password`) provided, logs in via `GET /Users/AuthenticateByName`. on fail, throws and screams.
+	"""Takes in either str(token), or any(`username` and `password`).
+	If only token provided (api key), tries to validate it via `GET /System/Info`. on fail, throws and screams.
+	If only (`username` AND `password`) provided, logs in via `GET /Users/AuthenticateByName`. on fail, throws and screams."""
 	
 	# for persistent sessions across the file
-	# TODO: move to global scope?
+	# TODO: move to global scope? (when moving to classes)
+	global sess
 	sess = requests.Session()
+	sess.headers.update({'User-Agent': "fily-github-com/1.0", "Authentication": "MediaBrowser Client=\"Jellyfin API\", Device=\"Python\", DeviceId=\"sdf\", Version=\"10.11.6\""})
 	# is the server even valid?
 	server_is_valid: bool = sess.get(f"{server}/System/Info/Public").status_code == 200
 	if server_is_valid:
 		if token and not (username and password):
 			print(f"using token to log in for {server}...")
 			token = f'MediaBrowser Token="{token}"'
-			sess.headers.update({'User-Agent': "fily-github-com/1.0", "Authorization": token})
+			sess.headers.update({"Authorization": token})
 			try:
-				test = sess.get(f"{server}/System/Info")
-				print(test.json())
+				login = sess.get(f"{server}/System/Info")
+				print(login.json())
+				print("logged in!! saving into [conf]...")
+				#conf.append(token)
 			except Exception as e:
 				print(e)
 				#raise "JellyfinAuthException"
-		pass
+		elif not token and (username and password):
+			print(f"logging in as {username}...")
+			login = sess.post(f"{server}/Users/AuthenticateByName", {'Username': username, 'Pw': password})
+			print(login.text)
+	else: # "everything's on fire and pigs are flying" -my friend
+		print("UH OH UH OH UH OH READ BELOW!!!!!!")
+		print("THE SERVER DID NOT RETURN ANYTHING ON `/System/Info/Public`!!!!!")
+		print("ENSURE THAT IT IS ON AND ACCESSIBLE FROM THE HOST!!!!!")
+		print("(bailing out, you are now on your own.)")
 
-auth(Jellyfin.api_key)
+#auth(Jellyfin.api_key)
+auth(username=Jellyfin.username, password=Jellyfin.password)
