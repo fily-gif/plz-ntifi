@@ -4,7 +4,7 @@ import requests
 server: str = Jellyfin.server if Jellyfin.server.startswith(("http://", "https://")) else f"https://{Jellyfin.server}"
 #* assuming https if no schema
 
-conf: list
+conf: list = []
 def auth(token:str=None, username=None, password=None):
 	"""Takes in either str(token), or any(`username` and `password`).
 	If only token provided (api key), tries to validate it via `GET /System/Info`. on fail, throws and screams.
@@ -14,7 +14,7 @@ def auth(token:str=None, username=None, password=None):
 	# TODO: move to global scope? (when moving to classes)
 	global sess
 	sess = requests.Session()
-	sess.headers.update({'User-Agent': "fily-github-com/1.0", "Authentication": "MediaBrowser Client=\"Jellyfin API\", Device=\"Python\", DeviceId=\"sdf\", Version=\"10.11.6\""})
+	sess.headers.update({'User-Agent': "fily-github-com/1.0", "Authorization": "MediaBrowser Client=\"Jellyfin API\", Device=\"Python\", DeviceId=\"sdf\", Version=\"10.11.6\""})
 	# is the server even valid?
 	server_is_valid: bool = sess.get(f"{server}/System/Info/Public").status_code == 200
 	if server_is_valid:
@@ -23,17 +23,21 @@ def auth(token:str=None, username=None, password=None):
 			token = f'MediaBrowser Token="{token}"'
 			sess.headers.update({"Authorization": token})
 			try:
-				login = sess.get(f"{server}/System/Info")
-				print(login.json())
-				print("logged in!! saving into [conf]...")
-				#conf.append(token)
+				login = sess.get(f"{server}/System/Info") # GET'ing an authorized endpoint
+				if login:
+					print("logged in!! saving into [conf]...")
+					conf.append(token) # TODO: PERSIST!!!!
 			except Exception as e:
 				print(e)
 				#raise "JellyfinAuthException"
 		elif not token and (username and password):
 			print(f"logging in as {username}...")
-			login = sess.post(f"{server}/Users/AuthenticateByName", {'Username': username, 'Pw': password})
-			print(login.text)
+			login = sess.post(f"{server}/Users/AuthenticateByName", json={'Username': username, 'Pw': password})
+			if login.status_code == 200:
+				logs = login.json()
+				print(f"logged in as {logs['User']['Name']}!! saving into [conf]...")
+				#print(logs)
+				conf.append(logs['AccessToken'])
 	else: # "everything's on fire and pigs are flying" -my friend
 		print("UH OH UH OH UH OH READ BELOW!!!!!!")
 		print("THE SERVER DID NOT RETURN ANYTHING ON `/System/Info/Public`!!!!!")
