@@ -4,7 +4,7 @@ import requests
 server: str = Jellyfin.server if Jellyfin.server.startswith(("http://", "https://")) else f"https://{Jellyfin.server}"
 #* assuming https if no schema
 
-conf: list = []
+conf: list = [] # TODO: save in config.py?
 def auth(token:str=None, username=None, password=None):
 	"""Takes in either str(token), or any(`username` and `password`).
 	If only token provided (api key), tries to validate it via `GET /System/Info`. on fail, throws and screams.
@@ -27,6 +27,7 @@ def auth(token:str=None, username=None, password=None):
 				if login:
 					print("logged in!! saving into [conf]...")
 					conf.append(token) # TODO: PERSIST!!!!
+					return token, login.json()
 			except Exception as e:
 				print(e)
 				#raise "JellyfinAuthException"
