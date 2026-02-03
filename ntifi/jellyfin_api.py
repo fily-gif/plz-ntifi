@@ -3,7 +3,7 @@ import json
 import requests
 server: str = Jellyfin.server if Jellyfin.server.startswith(("http://", "https://")) else f"https://{Jellyfin.server}"
 #* assuming https if no schema
-
+# TODO: MOVE WEBSOCKETS HERE!!!!!!!!!!!!
 conf: list = [] # TODO: save in config.py?
 def auth(token:str=None, username=None, password=None):
 	"""Takes in either str(token), or any(`username` and `password`).

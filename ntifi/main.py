@@ -15,14 +15,19 @@ def main(server):
 		# ...this means that it sends as soon as possible (0), and then "polls" every 2000ms (god i hate jellyfin api)
 		while True:
 			message = ws.recv() # wait for message
-			print(f"\nReceived message: {message}\n") # got it!!
-			if "Episode" in message: # TODO: filter/subscribe!!!
-				with open("out.json", "w") as f:
-					json.dump(message, f, indent=4, ensure_ascii=True)
-			if "ForceKeepAlive" in message: # will forcefully close if not pinged back
-				print("ping!!")
-				ws.send(json.dumps({"MessageType": "KeepAlive"})) # ping back
-				print("pong!!")
+			print(f"Received message: {message}") # got it!!
+			mes = json.loads(message)
+			match mes['MessageType']:
+				case "Sessions":
+					with open("out.json", "w") as f:
+						json.dump(message, f, indent=4, ensure_ascii=True)
+				case "ForceKeepAlive": # will forcefully close if not pinged back
+					ws.send(json.dumps({"MessageType": "KeepAlive"})) # ping back
+					print("pong!!")
+				case "KeepAlive": # we sent this, move on
+					pass
+				case _:
+					print(f"got {mes} (unhandled!)")
 
 if __name__ == "__main__":
 	main(server)
