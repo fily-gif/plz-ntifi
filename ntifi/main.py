@@ -24,8 +24,8 @@ def main(server):
 				case "ForceKeepAlive": # will forcefully close if not pinged back
 					ws.send(json.dumps({"MessageType": "KeepAlive"})) # ping back
 					print("pong!!")
-				case "KeepAlive": # we sent this, move on
-					pass
+				case "KeepAlive": # BUG: ws.recv apparently returns whatever we sent??
+					pass # we sent this, move on
 				case _:
 					print(f"got {mes} (unhandled!)")
 
