@@ -47,7 +47,7 @@ def format_to_schema(api, fp=None):
 
 	if fp:
 		with open(fp, "w") as f:
-			json.dump(schema, f)
+			json.dump(schema, f, indent=2, ensure_ascii=False)
 	return schema
 
 print(ticks_to_dt(37408540))
