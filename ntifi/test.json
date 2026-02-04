@@ -1,0 +1,23 @@
+{
+	"messageId": "7b2bd4d86d7043289e85632495dd9783",
+	"data": {
+		"playState": {
+			"positionTicks": 69210410,
+			"isPaused": false
+		},
+		"userId": "7a799f806f604898ac4c5fd62bcd7c72",
+		"userName": "fily",
+		"lastPaused": "",
+		"deviceName": "Firefox",
+		"nowPlaying": {
+			"name": "The Two Apprentices",
+			"id": "f4220d0c3a9c75947a339189b012264e",
+			"totalTicks": 14500480000,
+			"type": "Episode",
+			"episode": 11,
+			"season": 1,
+			"seasonName": "Season 1",
+			"seriesName": "Wandering Witch: The Journey of Elaina"
+		}
+	}
+}

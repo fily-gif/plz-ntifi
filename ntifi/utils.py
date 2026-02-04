@@ -24,12 +24,12 @@ def format_to_schema(api, fp=None):
 		'messageId': api_resp['MessageId'],
 		'data': {
 			'playState': {
-				'positionTicks': data['PlayState']['PositionTicks'],
+				'positionTicks': data['PlayState'].get('PositionTicks', -1),
 				'isPaused': data['PlayState']['IsPaused'],
 			},
 			'userId': data['UserId'],
 			'userName': data['UserName'],
-			'lastPaused': data['LastPausedDate'],
+			'lastPaused': data.get('LastPausedDate', ""),
 			'deviceName': data['DeviceName'],
 			'nowPlaying': {
 				'name': data['NowPlayingItem']['Name'],
@@ -37,7 +37,7 @@ def format_to_schema(api, fp=None):
 				'totalTicks': data['NowPlayingItem']['RunTimeTicks'],
 				'type': data['NowPlayingItem']['Type'],
 				# -1 for episode/season if movie
-				'episode': data['NowPlayingItem'].get('IndexNumber', -1),
+				'episode': data['NowPlayingItem'].get('IndexNumber', -1), # no idea if this works
 				'season': data['NowPlayingItem'].get('ParentIndexNumber', -1),
 				'seasonName': data['NowPlayingItem']['SeasonName'],
 				'seriesName': data['NowPlayingItem']['SeriesName'],

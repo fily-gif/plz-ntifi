@@ -2,6 +2,7 @@ from config import Jellyfin
 from jellyfin_api import auth
 import json
 from websockets.sync.client import connect
+import utils
 
 sess = auth(Jellyfin.api_key)
 token = sess[0] # formatted api key for http api
@@ -12,15 +13,16 @@ def main(server):
 	with connect(server) as ws:
 		ws.send(json.dumps({"MessageType": "SessionsStart", "Data": "0,2000" }))
 		# subscribing to SessionsStart with initialdelay 0, interval 2000
-		# ...this means that it sends as soon as possible (0), and then "polls" every 2000ms (god i hate jellyfin api)
+		#...this means that it sends as soon as possible (0), and then "polls" every 2000ms (god i hate jellyfin api)
 		while True:
 			message = ws.recv() # wait for message
 			print(f"Received message: {message}") # got it!!
 			mes = json.loads(message)
 			match mes['MessageType']:
 				case "Sessions":
-					with open("out.json", "w") as f:
-						json.dump(mes, f, indent=4, ensure_ascii=True)
+					utils.format_to_schema(message, "test.json")
+					#with open("out.json", "w") as f:
+					#	json.dump(mes, f, indent=4, ensure_ascii=True)
 				case "ForceKeepAlive": # will forcefully close if not pinged back
 					ws.send(json.dumps({"MessageType": "KeepAlive"})) # ping back
 					print("pong!!")
