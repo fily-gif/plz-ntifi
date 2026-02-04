@@ -20,7 +20,7 @@ def main(server):
 			match mes['MessageType']:
 				case "Sessions":
 					with open("out.json", "w") as f:
-						json.dump(message, f, indent=4, ensure_ascii=True)
+						json.dump(mes, f, indent=4, ensure_ascii=True)
 				case "ForceKeepAlive": # will forcefully close if not pinged back
 					ws.send(json.dumps({"MessageType": "KeepAlive"})) # ping back
 					print("pong!!")
