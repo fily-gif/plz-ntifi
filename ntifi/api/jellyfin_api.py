@@ -7,7 +7,8 @@ load_dotenv()
 server: str = (s := os.getenv("server")) and (s if s.startswith(("http://", "https://")) else f"https://{s}")
 #* assuming https if no schema
 #! !!!!NOTE!!!! I USED AI FOR `server` BECAUSE IM TOO STUPID
-# TODO: MOVE WEBSOCKETS HERE!!!!!!!!!!!!
+api_key = os.getenv("api_key")
+ws_server = server.replace("https://", "wss://")+f"/socket?api_key={api_key}&device_id=fjapi-ws"
 conf: list = [] # TODO: save in config.py?
 def auth(token:str=None, username=None, password=None):
 	"""Takes in either str(token), or any(`username` and `password`).
@@ -49,8 +50,10 @@ def auth(token:str=None, username=None, password=None):
 		print("ENSURE THAT IT IS ON AND ACCESSIBLE FROM THE HOST!!!!!")
 		print("(bailing out, you are now on your own.)")
 
-username = os.getenv("username")
-password = os.getenv("password")
-api_key = os.getenv("api_key")
-#auth(api_key)
-auth(username=username, password=password)
+
+if __name__ == '__main__':
+	#username = os.getenv("username")
+	#password = os.getenv("password")
+	#auth(api_key)
+	#auth(username=username, password=password)
+	pass
