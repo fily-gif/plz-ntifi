@@ -1,8 +1,12 @@
-from config import *
+#from config import *
+import os
 import json
 import requests
-server: str = Jellyfin.server if Jellyfin.server.startswith(("http://", "https://")) else f"https://{Jellyfin.server}"
+from dotenv import load_dotenv
+load_dotenv()
+server: str = (s := os.getenv("server")) and (s if s.startswith(("http://", "https://")) else f"https://{s}")
 #* assuming https if no schema
+#! !!!!NOTE!!!! I USED AI FOR `server` BECAUSE IM TOO STUPID
 # TODO: MOVE WEBSOCKETS HERE!!!!!!!!!!!!
 conf: list = [] # TODO: save in config.py?
 def auth(token:str=None, username=None, password=None):
@@ -45,5 +49,8 @@ def auth(token:str=None, username=None, password=None):
 		print("ENSURE THAT IT IS ON AND ACCESSIBLE FROM THE HOST!!!!!")
 		print("(bailing out, you are now on your own.)")
 
-#auth(Jellyfin.api_key)
-auth(username=Jellyfin.username, password=Jellyfin.password)
+username = os.getenv("username")
+password = os.getenv("password")
+api_key = os.getenv("api_key")
+#auth(api_key)
+auth(username=username, password=password)

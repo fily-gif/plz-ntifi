@@ -1,13 +1,16 @@
-from config import Jellyfin
-from jellyfin_api import auth
+#from config import Jellyfin
+import os
 import json
+from jellyfin_api import auth
+from dotenv import load_dotenv
 from websockets.sync.client import connect
-import utils
 
-sess = auth(Jellyfin.api_key)
+api_key = os.getenv("api_key")
+server = os.getenv("server")
+sess = auth(api_key)
 token = sess[0] # formatted api key for http api
 rejson = sess[1] # system/info return
-server = Jellyfin.server.replace("https://", "wss://")+f"/socket?api_key={Jellyfin.api_key}&device_id=sdfsdf" # oh man i sure do hope nothing breaks!
+server = server.replace("https://", "wss://")+f"/socket?api_key={api_key}&device_id=sdfsdf" # oh man i sure do hope nothing breaks!
 
 def main(server):
 	with connect(server) as ws:
