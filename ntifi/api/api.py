@@ -9,7 +9,7 @@ server: str = (s := os.getenv("server")) and (s if s.startswith(("http://", "htt
 #! !!!!NOTE!!!! I USED AI FOR `server` BECAUSE IM TOO STUPID
 api_key = os.getenv("api_key")
 ws_server = server.replace("https://", "wss://")+f"/socket?api_key={api_key}&device_id=fjapi-ws"
-conf: list = [] # TODO: save in config.py?
+conf: list = [] # TODO: save in a file?
 def auth(token:str=None, username=None, password=None):
 	"""Takes in either str(token), or any(`username` and `password`).
 	If only token provided (api key), tries to validate it via `GET /System/Info`. on fail, throws and screams.

@@ -2,10 +2,10 @@ import json
 from datetime import timedelta, datetime
 
 def ticks_to_dt(ticks:int):
-	# takes in ticks from
-	#...api_response['Data']['PlayState']['PositionTicks']
-	#...and converts it into a datetime object  
-	#...(jellyfin ticks are 1ms)
+	"""takes in ticks from
+	...api_response['Data']['PlayState']['PositionTicks']
+	...and converts it into a datetime object  
+	...(jellyfin ticks are 1ms)"""
 	seconds = ticks / 10_000_000 # til python support that lol
 	delta = timedelta(seconds=seconds)
 
@@ -14,9 +14,9 @@ def ticks_to_dt(ticks:int):
 	return formatted
 
 def format_to_schema(api, fp=None):
-	# takes in a raw api response,
-	#...converts it to fit schema.json schema,
-	#...and writes that to fp (optionally)
+	"""takes in a raw api response,
+	...converts it to fit schema.json schema,
+	...and writes that to fp (optionally)"""
 	api_resp = json.loads(api)
 	data = api_resp['Data'][0]
 
