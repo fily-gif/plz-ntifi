@@ -13,8 +13,8 @@ ws = jellyfin.websocket(creds[0], "rgsdfjdvfg") #server, device_id
 async def main():
 	conn = ws.connect()
 	# im bad at naming variables lol
-	events = ws.subscribe("event", 1000) #event, timing (ms)
-	async for message in evens: # returns the custom schema (much cleaner and better than whatever the hell the api returns)
+	events = conn.subscribe("event", 1000) #event, timing (ms)
+	async for message in events: # returns the custom schema (much cleaner and better than whatever the hell the api returns)
 		match message:
 			case "event1":
 				print("sdfjlnvjknfgnbjkfg")
