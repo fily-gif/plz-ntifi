@@ -74,8 +74,8 @@ class JellyfinWS:
 		async with connect(self.server) as ws:
 			print(f"connecting to {self.server}")
 			async for message in ws:
-				print(message) # HACK: debug, remove!
-				return message
+				#print(message) # HACK: debug, remove!
+				yield message # new keyword lol
 	
 
 # def auth(token:str=None, username=None, password=None):

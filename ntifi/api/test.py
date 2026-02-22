@@ -13,8 +13,8 @@ print(sess)
 
 async def main():
 	ws = api.JellyfinWS(fin, server, "sdfj")
-	conn = await ws.listen()
-	print(conn)
+	async for message in ws.listen():
+		print(message)
 
 if __name__ == '__main__':
 	asyncio.run(main())
