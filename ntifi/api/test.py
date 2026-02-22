@@ -8,11 +8,11 @@ fin = api.Jellyfin()
 api_key = os.getenv("api_key")
 server = os.getenv("server")
 sess = fin.auth(token=api_key)
-print(sess)
+#print(sess)
 #token = sess[0]
 
 async def main():
-	ws = api.JellyfinWS(fin, server, "sdfj")
+	ws = fin.websocket(server, "sdfj")
 	async for message in ws.listen():
 		print(message)
 

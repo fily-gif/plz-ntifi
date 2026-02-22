@@ -63,6 +63,9 @@ class Jellyfin:
 			# uh oh!
 			return # good luck to future me debugging this mess lol what a loser
 
+	def websocket(self, server, device_id):
+		return JellyfinWS(self, server, device_id)
+
 class JellyfinWS:
 	def __init__(self, jellyfin: Jellyfin, server: str, device_id: str):
 		self.jellyfin = jellyfin
@@ -72,10 +75,16 @@ class JellyfinWS:
 
 	async def listen(self):
 		async with connect(self.server) as ws:
-			print(f"connecting to {self.server}")
+			print(f"connecting to {server.replace("https", "wss",)}")
 			async for message in ws:
 				#print(message) # HACK: debug, remove!
 				yield message # new keyword lol
+	
+	async def subscribe(self, event_type: str or list, interval_ms: int):
+		if type(event_type) == list:
+			for event in event_type:
+				pass
+		pass
 	
 
 # def auth(token:str=None, username=None, password=None):
