@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+from websockets.asyncio.client import connect
 from dotenv import load_dotenv
 load_dotenv()
 server: str = (s := os.getenv("server")) and (s if s.startswith(("http://", "https://")) else f"https://{s}")
@@ -24,7 +25,7 @@ class Jellyfin:
 		#(i.e server, token, optional user+pw if that was used instead of token) (note: server returns token when logging in!)
 		self.sess = requests.Session()
 
-	def auth(token:str=None, username=None, password=None):
+	def auth(self, token:str=None, username=None, password=None):
 		"""
 		Takes in either str(token), or any(`username` and `password`).
 		If only token provided (api key), tries to validate it via `GET /System/Info`.
@@ -32,13 +33,13 @@ class Jellyfin:
 		"""
 
 		# set jellyfin-specific headers, token or none for auth because we're providing our own (unless user provides it!)
-		sess.headers.update({'User-Agent': "fily-github-com/1.0", "Authorization": f"MediaBrowser Client=\"{token or None}\", Device=\"Python\", DeviceId=\"PyJfinApi\", Version=\"10.11.6\""})
+		self.sess.headers.update({'User-Agent': "fily-github-com/1.0", "Authorization": f"MediaBrowser Client=\"{token or None}\", Device=\"Python\", DeviceId=\"PyJfinApi\", Version=\"10.11.6\""})
 		token: str # we'll be editing this later to be whatever the hell we got from auth for future requests
 		#...(really, all we need from auth is the token for websocket connection, since the flow is auth("sjkdfhjkfg") -> connect() lol)
 
 		# we might as well try to `ping` the root endpoint itself, but this is the "proper"-er way of doing this
 		#...also its almost midnight and i want to get just the class rewrite out lol (even if it doesnt work)
-		server_is_valid: bool = sess.get(f"{server}/System/Info/Public").status_code == 200
+		server_is_valid: bool = self.sess.get(f"{server}/System/Info/Public").status_code == 200
 		if server_is_valid:
 			if token and not (username and password):
 				print(f"using token to log in for {server}!") # FIXME: change all prints to logger!!
@@ -53,7 +54,7 @@ class Jellyfin:
 
 			elif not token and (username and password): # user login
 				print(f"logging in as {username}...")
-				login = sess.post(f"{server}/Users/AuthenticateByName", json={'Username': username, 'Pw': password})
+				login = self.sess.post(f"{server}/Users/AuthenticateByName", json={'Username': username, 'Pw': password})
 				if login.status_code == 200:
 					logs = login.json()
 					print(f"logged in as {logs['User']['Name']}!")
@@ -62,9 +63,20 @@ class Jellyfin:
 			# uh oh!
 			return # good luck to future me debugging this mess lol what a loser
 
-class JWebsocket(Jellyfin):
+class JellyfinWS:
+	def __init__(self, jellyfin: Jellyfin, server: str, device_id: str):
+		self.jellyfin = jellyfin
+		# assuming https because meh
+		self.server = server.replace("https://", "wss://")+f"/socket?api_key={api_key}&device_id={device_id}"
+		self.device_id = device_id
+
+	async def listen(self):
+		async with connect(self.server) as ws:
+			print(f"connecting to {self.server}")
+			async for message in ws:
+				print(message) # HACK: debug, remove!
+				return message
 	
-	pass
 
 # def auth(token:str=None, username=None, password=None):
 # 	"""Takes in either str(token), or any(`username` and `password`).
