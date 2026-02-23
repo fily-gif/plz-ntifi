@@ -72,6 +72,7 @@ class JellyfinWS:
 		# assuming https because meh
 		self.server = server.replace("https://", "wss://")+f"/socket?api_key={api_key}&device_id={device_id}"
 		self.device_id = device_id
+		self._ws
 
 	async def listen(self):
 		async with connect(self.server) as ws:
