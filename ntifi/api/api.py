@@ -68,6 +68,14 @@ class Jellyfin:
 		return JellyfinWS(self, server, device_id)
 
 class JellyfinWS:
+	"""
+	Jellyfin WebSocket class.
+	There is absolutely no scenario in which this should be used directly,
+	and it most likely doesnt work on its own.
+	By rawdogging JellyfinWS, you agree to never ever _EVER_ complain
+	about your code not working.
+	(why would you even use this entire file on its own??? its a part of plz-notifi)
+	"""
 	#! NOTE: AI USAGE DISCLOSURE:
 	#! I GOT SOME HELP FROM AN LLM
 	#! BECAUSE IM TOO STUPID FOR ALL OF THIS
@@ -91,6 +99,9 @@ class JellyfinWS:
 				await self._queue.put(message)
 	
 	def listen(self):
+		"""
+		Connects to self.server (as defined in __init__().)
+		"""
 		asyncio.create_task(self._listen())
 		return self._iter()
 
@@ -98,8 +109,11 @@ class JellyfinWS:
 		while True:
 			yield await self._queue.get()
 
-	async def subscribe(self, event_type: str or list, interval_ms: int): # NOTE: event is asyncio stuff, event_type is our own!!
-		print("waiting")
+	async def subscribe(self, event_type: str or list, interval_ms: int):
+		"""
+		Subscribes to an event with interval_ms interval.
+		For a list of all events, find them yourself (for now) (sorry!)
+		"""
 		await self._event.wait() # im waiting and waiting and waiting and waiting for you 🗣️🗣️🗣️🗣️
 		if type(event_type) == list:
 			for event in event_type:
