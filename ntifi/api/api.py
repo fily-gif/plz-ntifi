@@ -1,5 +1,6 @@
 import os
 import json
+import utils
 import asyncio
 import requests
 from websockets.asyncio.client import connect
@@ -15,7 +16,7 @@ conf: list = [] # TODO: save in a file?
 class Jellyfin:
 	"""
 	The Jellyfin API class.
-	Handles auth and websocket stuff (mainly logging in and capturing events, see `utils.py` for the rest)
+	Handles auth and websocket stuff (in JellyfinWS) (mainly logging in and capturing events, see `utils.py` for the rest)
 	!NOTE: This is a rewrite of the official library because I don't like how it's doing things, and I needed an extremely specific
 	!...set of endpoints, so yes, I reinvented the wheel.
 	(I don't like the official library.) 
@@ -88,15 +89,19 @@ class JellyfinWS:
 		self._event = asyncio.Event() # "connected event" event
 		self._queue = asyncio.Queue()
 	
-	async def _listen(self):
+	def schema(self, input): # lol
+		return utils.format_to_schema(input)
+
+	async def _listen(self, schema_format:bool=True): # yea i'd like a schema thanks
 		async with connect(self.server) as ws:
 			print(f"connecting to {server.replace("https", "wss",)}")
 			# HACK: :(
 			self._ws = ws # expose websocket for subscribe()
 			self._event.set() # signal that we're ready
+			# TODO: load in the message and do keepalive stuff! (also check for those)
 			async for message in ws:
-				#print(message) # HACK: debug, remove!
-				await self._queue.put(message)
+				#print(message)
+				await self._queue.put(self.schema(message)) if schema_format else await self._queue.put(message)
 	
 	def listen(self):
 		"""
@@ -114,6 +119,7 @@ class JellyfinWS:
 		Subscribes to an event with interval_ms interval.
 		For a list of all events, find them yourself (for now) (sorry!)
 		"""
+		# TODO: make an enum(?) of all possible ws events
 		await self._event.wait() # im waiting and waiting and waiting and waiting for you 🗣️🗣️🗣️🗣️
 		if type(event_type) == list:
 			for event in event_type:
@@ -122,48 +128,6 @@ class JellyfinWS:
 		else:
 			await self._ws.send(json.dumps({"MessageType": event_type, "Data": f"0,{interval_ms}" }))
 			print(f"subscribed to event {event_type}")
-	
-
-# def auth(token:str=None, username=None, password=None):
-# 	"""Takes in either str(token), or any(`username` and `password`).
-# 	If only token provided (api key), tries to validate it via `GET /System/Info`. on fail, throws and screams.
-# 	If only (`username` AND `password`) provided, logs in via `GET /Users/AuthenticateByName`. on fail, throws and screams."""
-	
-# 	# for persistent sessions across the file
-# 	# TODO: move to global scope? (when moving to classes)
-# 	global sess
-# 	sess = requests.Session()
-# 	sess.headers.update({'User-Agent': "fily-github-com/1.0", "Authorization": "MediaBrowser Client=\"Jellyfin API\", Device=\"Python\", DeviceId=\"sdf\", Version=\"10.11.6\""})
-# 	# is the server even valid?
-# 	server_is_valid: bool = sess.get(f"{server}/System/Info/Public").status_code == 200
-# 	if server_is_valid:
-# 		if token and not (username and password):
-# 			print(f"using token to log in for {server}...")
-# 			token = f'MediaBrowser Token="{token}"'
-# 			sess.headers.update({"Authorization": token})
-# 			try:
-# 				login = sess.get(f"{server}/System/Info") # GET'ing an authorized endpoint
-# 				if login:
-# 					print("logged in!! saving into [conf]...")
-# 					conf.append(token) # TODO: PERSIST!!!!
-# 					return token, login.json()
-# 			except Exception as e:
-# 				print(e)
-# 				#raise "JellyfinAuthException"
-# 		elif not token and (username and password):
-# 			print(f"logging in as {username}...")
-# 			login = sess.post(f"{server}/Users/AuthenticateByName", json={'Username': username, 'Pw': password})
-# 			if login.status_code == 200:
-# 				logs = login.json()
-# 				print(f"logged in as {logs['User']['Name']}!! saving into [conf]...")
-# 				#print(logs)
-# 				conf.append(logs['AccessToken'])
-# 	else: # "everything's on fire and pigs are flying" -my friend
-# 		print("UH OH UH OH UH OH READ BELOW!!!!!!")
-# 		print("THE SERVER DID NOT RETURN ANYTHING ON `/System/Info/Public`!!!!!")
-# 		print("ENSURE THAT IT IS ON AND ACCESSIBLE FROM THE HOST!!!!!")
-# 		print("(bailing out, you are now on your own.)")
-
 
 if __name__ == '__main__':
 	#username = os.getenv("username")
