@@ -28,19 +28,19 @@ def format_to_schema(api, fp=None):
 				'messageId': api_resp['MessageId'],
 				'data': {
 					'playState': {
-						'positionTicks': data['PlayState'].get('PositionTicks', -1),
+						'positionTicks': data['PlayState'].get('PositionTicks', None),
 						'isPaused': data['PlayState']['IsPaused'],
 					},
 					'userId': data['UserId'],
 					'userName': data['UserName'],
-					'lastPaused': data.get('LastPausedDate', ""),
+					'lastPaused': data.get('LastPausedDate', None),
 					'deviceName': data['DeviceName'],
 					'nowPlaying': {
 						'name': data['NowPlayingItem']['Name'],
 						'id': data['NowPlayingItem']['Id'],
 						'totalTicks': data['NowPlayingItem']['RunTimeTicks'],
 						'type': data['NowPlayingItem']['Type'],
-						# -1 for episode/season if movie
+						# None for episode/season if movie
 						'episode': data['NowPlayingItem'].get('IndexNumber', None), # no idea if this works
 						'season': data['NowPlayingItem'].get('ParentIndexNumber', None),
 						'seasonName': data['NowPlayingItem'].get('SeasonName', None), # season name doesnt exist if its not a show

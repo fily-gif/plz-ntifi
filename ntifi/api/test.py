@@ -12,7 +12,7 @@ sess = fin.auth(token=api_key)
 #token = sess[0]
 
 async def main():
-	ws = fin.websocket(server, "sdfj")
+	ws = fin.websocket(server, "discord")
 	events = ws.listen()
 	await ws.subscribe("SessionsStart", 2000)
 	async for message in events:

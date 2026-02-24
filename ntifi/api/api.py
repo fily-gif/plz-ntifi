@@ -100,6 +100,12 @@ class JellyfinWS:
 			self._event.set() # signal that we're ready
 			# TODO: load in the message and do keepalive stuff! (also check for those)
 			async for message in ws:
+				temp = json.loads(message)
+				if temp['MessageType'] == "ForceKeepAlive": # ping
+					await ws.send(json.dumps({"MessageType": "KeepAlive"})) # pong
+					continue
+				if temp['MessageType'] == "KeepAlive": # we sent this
+					continue
 				#print(message)
 				await self._queue.put(self.schema(message)) if schema_format else await self._queue.put(message)
 	
