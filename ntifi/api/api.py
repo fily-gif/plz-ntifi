@@ -81,6 +81,8 @@ class JellyfinWS:
 	#! I GOT SOME HELP FROM AN LLM
 	#! BECAUSE IM TOO STUPID FOR ALL OF THIS
 	#! FANCY ASYNCIO STUFF!!!
+
+	# TODO: https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Model/Session/SessionMessageType.cs
 	def __init__(self, jellyfin: Jellyfin, server: str, device_id: str):
 		self.jellyfin = jellyfin
 		# assuming https because meh
