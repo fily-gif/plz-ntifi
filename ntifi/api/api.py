@@ -1,5 +1,6 @@
 import os
 import json
+import asyncio
 import requests
 from websockets.asyncio.client import connect
 from dotenv import load_dotenv
@@ -67,25 +68,46 @@ class Jellyfin:
 		return JellyfinWS(self, server, device_id)
 
 class JellyfinWS:
+	#! NOTE: AI USAGE DISCLOSURE:
+	#! I GOT SOME HELP FROM AN LLM
+	#! BECAUSE IM TOO STUPID FOR ALL OF THIS
+	#! FANCY ASYNCIO STUFF!!!
 	def __init__(self, jellyfin: Jellyfin, server: str, device_id: str):
 		self.jellyfin = jellyfin
 		# assuming https because meh
 		self.server = server.replace("https://", "wss://")+f"/socket?api_key={api_key}&device_id={device_id}"
 		self.device_id = device_id
-		self._ws
-
-	async def listen(self):
+		self._event = asyncio.Event() # "connected event" event
+		self._queue = asyncio.Queue()
+	
+	async def _listen(self):
 		async with connect(self.server) as ws:
 			print(f"connecting to {server.replace("https", "wss",)}")
+			# HACK: :(
+			self._ws = ws # expose websocket for subscribe()
+			self._event.set() # signal that we're ready
 			async for message in ws:
 				#print(message) # HACK: debug, remove!
-				yield message # new keyword lol
+				await self._queue.put(message)
 	
-	async def subscribe(self, event_type: str or list, interval_ms: int):
+	def listen(self):
+		asyncio.create_task(self._listen())
+		return self._iter()
+
+	async def _iter(self):
+		while True:
+			yield await self._queue.get()
+
+	async def subscribe(self, event_type: str or list, interval_ms: int): # NOTE: event is asyncio stuff, event_type is our own!!
+		print("waiting")
+		await self._event.wait() # im waiting and waiting and waiting and waiting for you 🗣️🗣️🗣️🗣️
 		if type(event_type) == list:
 			for event in event_type:
-				pass
-		pass
+				await self._ws.send(json.dumps({"MessageType": event_type, "Data": f"0,{interval_ms}" }))
+				print(f"subscribed to events {event_type}")
+		else:
+			await self._ws.send(json.dumps({"MessageType": event_type, "Data": f"0,{interval_ms}" }))
+			print(f"subscribed to event {event_type}")
 	
 
 # def auth(token:str=None, username=None, password=None):

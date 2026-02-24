@@ -13,7 +13,9 @@ sess = fin.auth(token=api_key)
 
 async def main():
 	ws = fin.websocket(server, "sdfj")
-	async for message in ws.listen():
+	events = ws.listen()
+	await ws.subscribe("SessionsStart", 2000)
+	async for message in events:
 		print(message)
 
 if __name__ == '__main__':
