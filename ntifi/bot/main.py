@@ -1,7 +1,6 @@
 import os
 import nextcord
 from nextcord.ext import commands
-#from discord import app_commands # slash commands
 from dotenv import load_dotenv
 import api
 
@@ -12,7 +11,6 @@ bot_token = os.getenv("bot_token")
 api_key = os.getenv("api_key")
 fin = api.Jellyfin()
 token = fin.auth(token=api_key)
-print(token)
 
 @bot.slash_command()
 async def ping(ctx):
@@ -20,8 +18,8 @@ async def ping(ctx):
 
 @bot.slash_command()
 async def test(ctx):
-	await ctx.defer()
-	await ctx.reply("sdfsdf")
+	await ctx.response.defer()
+	await ctx.followup.send("sdfsdf")
 
 @bot.event
 async def on_ready():
