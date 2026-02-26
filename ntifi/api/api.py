@@ -1,10 +1,10 @@
 import os
 import json
-import utils
 import asyncio
 import logging
 import requests
 from dotenv import load_dotenv
+from .utils import format_to_schema
 from websockets.asyncio.client import connect
 load_dotenv()
 server: str = (s := os.getenv("server")) and (s if s.startswith(("http://", "https://")) else f"https://{s}")

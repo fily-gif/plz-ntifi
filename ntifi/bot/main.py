@@ -5,13 +5,14 @@ from nextcord.ext import commands
 from dotenv import load_dotenv
 import api
 
-load_dotenv()
+load_dotenv("../.env")
 intents = nextcord.Intents.all()
 bot = commands.Bot(intents=intents)
-token = os.getenv("bot_token")
+bot_token = os.getenv("bot_token")
 api_key = os.getenv("api_key")
-fin = Jellyfin()
+fin = api.Jellyfin()
 token = fin.auth(token=api_key)
+print(token)
 
 @bot.slash_command()
 async def ping(ctx):
@@ -27,4 +28,4 @@ async def on_ready():
 	print(f"logged in as {bot.user}!! ({bot.user.id})")
 	
 
-bot.run(token)
+bot.run(bot_token)
