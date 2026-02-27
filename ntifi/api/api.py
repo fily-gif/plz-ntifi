@@ -130,11 +130,12 @@ class JellyfinWS:
 		return utils.format_to_schema(input)
 
 	async def _listen(self, schema_format:bool=True): # yea i'd like a schema thanks
+		print(f"connecting to {server.replace("https", "wss",)}")
 		async with connect(self.server) as ws:
-			print(f"connecting to {server.replace("https", "wss",)}")
 			# HACK: :(
 			self._ws = ws # expose websocket for subscribe()
 			self._event.set() # signal that we're ready
+			print("connected!")
 			async for message in ws:
 				temp = json.loads(message)
 				if temp['MessageType'] == "ForceKeepAlive": # ping

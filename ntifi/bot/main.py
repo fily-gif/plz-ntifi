@@ -25,23 +25,27 @@ async def ping(ctx):
 @bot.slash_command()
 async def event_subscribe(ctx, event, timing:int="1000"): # timing is in ms!!
 	await ctx.response.defer()
-	await ws.subscribe("event", timing)
-	await ctx.followup.respond(f"subscribed to {event} with {timing}ms interval!", ephemeral=True)
+	await ws.subscribe(f"{event}", timing) # str'ing just in case
+	await ctx.reply(f"subscribed to {event} with {timing}ms interval!", ephemeral=True)
+	
 
 @bot.slash_command()
 @commands.check_any(commands.is_owner(), is_guild_owner())
 async def set_channel(ctx, channel: nextcord.TextChannel):
-	await ctx.respond("sdfjdf")
+	await ctx.send("sdfjdf")
+	# async for message in events:
+	# 	print(message)
 
 @bot.event
 async def on_ready():
 	print(f"logged in as {bot.user}!! ({bot.user.id})")
 	print("straight up socketing it")
-	ws = fin.websocket(server, "discord")
-	events = ws.listen() # idling the connection on start
 	# for use in the rest of the code
 	global ws
 	global events
+	ws = fin.websocket(server, "discord")
+	global events
+	events = ws.listen() # idling the connection on start
 	
 
 bot.run(bot_token)
