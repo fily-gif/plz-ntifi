@@ -4,7 +4,7 @@ import asyncio
 import logging
 import requests
 from dotenv import load_dotenv
-from .utils import format_to_schema
+from . import utils
 from websockets.asyncio.client import connect
 load_dotenv()
 server: str = (s := os.getenv("server")) and (s if s.startswith(("http://", "https://")) else f"https://{s}")
@@ -127,7 +127,7 @@ class JellyfinWS:
 		self._queue = asyncio.Queue()
 	
 	def schema(self, input): # lol
-		return utils.format_to_schema(input)
+		return utils.format_to_schema(input, "aa.json")
 
 	async def _listen(self, schema_format:bool=True): # yea i'd like a schema thanks
 		print(f"connecting to {server.replace("https", "wss",)}")

@@ -13,6 +13,9 @@ server = os.getenv("server")
 fin = api.Jellyfin()
 token = fin.auth(token=api_key)
 
+_channel = ""
+_event = ""
+
 def is_guild_owner():
     def predicate(ctx):
         return ctx.guild is not None and ctx.guild.owner_id == ctx.author.id
@@ -20,21 +23,27 @@ def is_guild_owner():
 
 @bot.slash_command()
 async def ping(ctx):
-	await ctx.send('pong')
+	await ctx.send(f':pong: pong! ({round(bot.latency*1000, 2)})')
 
 @bot.slash_command()
 async def event_subscribe(ctx, event, timing:int="1000"): # timing is in ms!!
 	await ctx.response.defer()
 	await ws.subscribe(f"{event}", timing) # str'ing just in case
-	await ctx.reply(f"subscribed to {event} with {timing}ms interval!", ephemeral=True)
+	await ctx.send(f"subscribed to {event} with {timing}ms interval!", ephemeral=True)
+	_event = event
 	
 
 @bot.slash_command()
 @commands.check_any(commands.is_owner(), is_guild_owner())
 async def set_channel(ctx, channel: nextcord.TextChannel):
-	await ctx.send("sdfjdf")
-	# async for message in events:
-	# 	print(message)
+	_channel = channel.id
+	await ctx.send(f"set channel to <#{channel.id}>! ({channel.id})")
+
+@bot.slash_command()
+async def start_tracking(ctx):
+	await ctx.send(f"all {_event} events will be sent here!!")
+	async for message in events:
+		await ctx.send(str(message))
 
 @bot.event
 async def on_ready():

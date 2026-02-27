@@ -22,6 +22,8 @@ def format_to_schema(api, fp=None):
 		#print(api_resp)
 		if api_resp['MessageType'] == "ForceKeepAlive": return api # ignore ping-pongs 
 		data = api_resp['Data'][0]# if type(api_resp['Data'][0]) is dict else None
+		with open(fp, "w") as f:
+			json.dump(schema, f, indent=2, ensure_ascii=False)
 
 		if data:
 			schema = {
@@ -49,7 +51,7 @@ def format_to_schema(api, fp=None):
 					'eventType': api_resp['MessageType']
 				}
 			}
-
+			print(api_resp['MessageType'])
 			if fp:
 				with open(fp, "w") as f:
 					json.dump(schema, f, indent=2, ensure_ascii=False)
