@@ -20,7 +20,7 @@ def format_to_schema(api, fp=None):
 	try:
 		api_resp = json.loads(api)
 		#print(api_resp)
-		if api_resp['MessageType'] == "ForceKeepAlive": return api # ignore ping-pongs 
+		#if api_resp['MessageType'] == "ForceKeepAlive": return api # ignore ping-pongs 
 		data = api_resp['Data'][0]# if type(api_resp['Data'][0]) is dict else None
 		with open(fp, "w") as f:
 			json.dump(schema, f, indent=2, ensure_ascii=False)
