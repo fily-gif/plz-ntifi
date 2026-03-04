@@ -1,4 +1,6 @@
+import sys
 import json
+import traceback
 from datetime import timedelta, datetime
 
 def ticks_to_dt(ticks:int):
@@ -21,11 +23,14 @@ def format_to_schema(api, fp=None):
 		api_resp = json.loads(api)
 		#print(api_resp)
 		#if api_resp['MessageType'] == "ForceKeepAlive": return api # ignore ping-pongs 
-		data = api_resp['Data'][0]# if type(api_resp['Data'][0]) is dict else None
-		with open(fp, "w") as f:
-			json.dump(schema, f, indent=2, ensure_ascii=False)
+		is_watching = api_resp['Data'][0].get('NowPlayingItem') or None
+		print(is_watching)
+		data = api_resp['Data'][0]
+		#print(api_resp)
+		#with open(fp, "w") as f:
+		#	json.dump(schema, f, indent=2, ensure_ascii=False)
 
-		if data:
+		if is_watching:
 			schema = {
 				'messageId': api_resp['MessageId'],
 				'data': {
@@ -56,9 +61,14 @@ def format_to_schema(api, fp=None):
 				with open(fp, "w") as f:
 					json.dump(schema, f, indent=2, ensure_ascii=False)
 			return schema
-		return api
+		else:
+			print("not")
+		# else, silently fail because im way too tired of trying to make this work for other events i wont even need guh
+		#print(api_resp)
 	except Exception as e:
-		print(e)
+		traceback.print_exc(file=sys.stdout)
+		for line in traceback.format_tb(e.__traceback__):
+			print(f"ERROR: {line}", end="")
 		
 
 # print(ticks_to_dt(37408540))
