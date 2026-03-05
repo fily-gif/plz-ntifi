@@ -24,7 +24,7 @@ def format_to_schema(api, fp=None):
 		#print(api_resp)
 		#if api_resp['MessageType'] == "ForceKeepAlive": return api # ignore ping-pongs 
 		is_watching = api_resp['Data'][0].get('NowPlayingItem') or None
-		print(is_watching)
+		print(is_watching == False)
 		data = api_resp['Data'][0]
 
 		if is_watching:
@@ -55,7 +55,7 @@ def format_to_schema(api, fp=None):
 					'eventType': api_resp['MessageType']
 				}
 			}
-			print(api_resp['MessageType'])
+			#print(api_resp['MessageType'])
 			if fp:
 				with open(fp, "w") as f:
 					json.dump(schema, f, indent=2, ensure_ascii=False)

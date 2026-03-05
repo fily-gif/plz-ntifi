@@ -36,7 +36,7 @@ async def event_subscribe(ctx, event, timing:int="1000"): # timing is in ms!!
 @bot.slash_command()
 @commands.check_any(commands.is_owner(), is_guild_owner())
 async def set_channel(ctx, channel: nextcord.TextChannel):
-	_channel = channel.id
+	_channel = channel.id # TODO: use this
 	await ctx.send(f"set channel to <#{channel.id}>! ({channel.id})")
 
 @bot.slash_command()
@@ -46,8 +46,8 @@ async def start_tracking(ctx):
 	#print(dir(ctx.send))
 	await ctx.send(f"all {_event} events will be sent here!!") # FIXME: _event is empty? (not even None...)
 	async for message in events:
-		print(list(message)[1])
-		await ctx.channel.send(str(list(message)[0])) # we dont want it to reply to the initial message lol
+		print(list(message))
+		#await ctx.channel.send(list(message[0])) # we dont want it to reply to the initial message lol
 
 @bot.event
 async def on_ready():

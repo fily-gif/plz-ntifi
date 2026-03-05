@@ -167,10 +167,10 @@ class JellyfinWS:
 		if type(event_type) == list:
 			for event in event_type:
 				await self._ws.send(json.dumps({"MessageType": event_type, "Data": f"0,{interval_ms}" }))
-				print(f"subscribed to events {event_type}")
+			print(f"subscribed to events {event_type} with interval of {interval_ms}ms")
 		else:
 			await self._ws.send(json.dumps({"MessageType": event_type, "Data": f"0,{interval_ms}" }))
-			print(f"subscribed to event {event_type}")
+			print(f"subscribed to event {event_type} with interval of {interval_ms}ms")
 
 if __name__ == '__main__':
 	#username = os.getenv("username")

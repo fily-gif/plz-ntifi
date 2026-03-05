@@ -16,7 +16,7 @@ async def main():
 	events = ws.listen()
 	await ws.subscribe("SessionsStart", 2000)
 	async for message in events:
-		print(f"aaaa\n{message}\nAAAA")
+		print(list(message)[0]['data']['playState']['positionTicksFormatted'])
 
 if __name__ == '__main__':
 	asyncio.run(main())
