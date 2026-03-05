@@ -41,9 +41,13 @@ async def set_channel(ctx, channel: nextcord.TextChannel):
 
 @bot.slash_command()
 async def start_tracking(ctx):
-	await ctx.send(f"all {_event} events will be sent here!!")
+	#print(ctx)
+	#print(dir(ctx))
+	#print(dir(ctx.send))
+	await ctx.send(f"all {_event} events will be sent here!!") # FIXME: _event is empty? (not even None...)
 	async for message in events:
-		await ctx.send(str(message))
+		print(list(message)[1])
+		await ctx.channel.send(str(list(message)[0])) # we dont want it to reply to the initial message lol
 
 @bot.event
 async def on_ready():

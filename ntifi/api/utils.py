@@ -26,16 +26,14 @@ def format_to_schema(api, fp=None):
 		is_watching = api_resp['Data'][0].get('NowPlayingItem') or None
 		print(is_watching)
 		data = api_resp['Data'][0]
-		#print(api_resp)
-		#with open(fp, "w") as f:
-		#	json.dump(schema, f, indent=2, ensure_ascii=False)
 
 		if is_watching:
 			schema = {
 				'messageId': api_resp['MessageId'],
 				'data': {
 					'playState': {
-						'positionTicks': data['PlayState'].get('PositionTicks', None),
+						'positionTicks': data['PlayState']['PositionTicks'],
+						'positionTicksFormatted': ticks_to_dt(data['PlayState']['PositionTicks']),
 						'isPaused': data['PlayState']['IsPaused'],
 					},
 					'userId': data['UserId'],
@@ -46,7 +44,8 @@ def format_to_schema(api, fp=None):
 						'name': data['NowPlayingItem']['Name'],
 						'id': data['NowPlayingItem']['Id'],
 						'totalTicks': data['NowPlayingItem']['RunTimeTicks'],
-						'type': data['NowPlayingItem']['Type'],
+						'totalTicksFormatted': ticks_to_dt(data['NowPlayingItem']['RunTimeTicks']),
+						'type': data['NowPlayingItem']['Type'], # realistically, we only care about Episode, Movie, Season, Series
 						# None for episode/season if movie
 						'episode': data['NowPlayingItem'].get('IndexNumber', None), # no idea if this works
 						'season': data['NowPlayingItem'].get('ParentIndexNumber', None),
@@ -60,11 +59,10 @@ def format_to_schema(api, fp=None):
 			if fp:
 				with open(fp, "w") as f:
 					json.dump(schema, f, indent=2, ensure_ascii=False)
-			return schema
+			return schema, True # schema alongside True because it (the rest) needs to know if this is a schema or api_resp
 		else:
 			print("not")
-		# else, silently fail because im way too tired of trying to make this work for other events i wont even need guh
-		#print(api_resp)
+			return api_resp # not returning (api_resp, False) because it counts as None
 	except Exception as e:
 		traceback.print_exc(file=sys.stdout)
 		for line in traceback.format_tb(e.__traceback__):
