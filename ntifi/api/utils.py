@@ -23,7 +23,7 @@ def format_to_schema(api, fp=None):
 		api_resp = json.loads(api)
 		#print(api_resp)
 		#if api_resp['MessageType'] == "ForceKeepAlive": return api # ignore ping-pongs 
-		is_watching = True if api_resp['Data'][0].get('NowPlayingItem') else False
+		is_watching = bool(api_resp['Data'][0].get('NowPlayingItem'))
 		print(f"valid? {is_watching}")
 		data = api_resp['Data'][0]
 
@@ -62,12 +62,11 @@ def format_to_schema(api, fp=None):
 			return schema, True # schema alongside True because it (the rest) needs to know if this is a schema or api_resp
 		else:
 			print("not proper Sessions!")
-			return api_resp, False
+			pass#return
 	except Exception as e:
 		traceback.print_exc(file=sys.stdout)
 		for line in traceback.format_tb(e.__traceback__):
 			print(f"ERROR: {line}", end="")
-		
 
 # print(ticks_to_dt(37408540))
 if __name__ == '__main__':

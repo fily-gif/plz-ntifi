@@ -16,15 +16,16 @@ async def main():
 	events = ws.listen()
 	await ws.subscribe("SessionsStart", 2000)
 	async for message in events:
+		if message == None: continue # just ignore if its not playback :(
 		print(f"raw message: {list(message)}")
-		schemad = list(message[1])
+		schemad = message[1]
 		print(f"schemad {schemad}")
 		if schemad:
-			message = list(message[0]) # schema'd!
+			message = message[0] # schema'd!
 			print(f"raw schema: {message}")
 			print(f"stuff: {message['data']['playState']['positionTicksFormatted']}")
 		else:
-			print(f"got none uh oh (got {message})")
+			print(f"unreachable code reached wtf")
 			continue
 
 if __name__ == '__main__':
