@@ -210,3 +210,4 @@ __marimo__/
 !**/*.example
 **/out.json
 **/aa.json
+**/test.txt

@@ -19,10 +19,10 @@ def format_to_schema(api, fp=None):
 	"""Takes in a raw api response,
 	converts it to fit schema.json schema,
 	and writes that to fp (optionally)"""
+	# TODO: TEST NOWPLAYING.TYPE TYPES TO SEE HOW DIFFERENT THE API RESPONSE IS
 	try:
 		api_resp = json.loads(api)
 		#print(api_resp)
-		#if api_resp['MessageType'] == "ForceKeepAlive": return api # ignore ping-pongs 
 		is_watching = bool(api_resp['Data'][0].get('NowPlayingItem'))
 		print(f"valid? {is_watching}")
 		data = api_resp['Data'][0]
@@ -46,10 +46,10 @@ def format_to_schema(api, fp=None):
 						'totalTicks': data['NowPlayingItem']['RunTimeTicks'],
 						'totalTicksFormatted': ticks_to_dt(data['NowPlayingItem']['RunTimeTicks']),
 						'type': data['NowPlayingItem']['Type'], # realistically, we only care about Episode, Movie, Season, Series
-						# None for episode/season if movie
+						# None for episode/season if Movie
 						'episode': data['NowPlayingItem'].get('IndexNumber', None), # no idea if this works
 						'season': data['NowPlayingItem'].get('ParentIndexNumber', None),
-						'seasonName': data['NowPlayingItem'].get('SeasonName', None), # season name doesnt exist if its not a show
+						'seasonName': data['NowPlayingItem'].get('SeasonName', None), # season name doesnt exist if its not a Series?
 						'seriesName': data['NowPlayingItem'].get('SeriesName', None), # same for series name apparently?
 					},
 					'eventType': api_resp['MessageType']
