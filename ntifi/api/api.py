@@ -79,22 +79,22 @@ class Jellyfin:
 		server_is_valid: bool = self.sess.get(f"{server}/System/Info/Public").status_code == 200
 		if server_is_valid:
 			if token and not (username and password):
-				print(f"using token to log in for {server}!") # FIXME: change all prints to logger!!
+				logger.debug(f"using token to log in for {server}!") # FIXME: change all prints to logger!!
 				try:
 					login = self.sess.get(f"{server}/System/Info") # GETing an authed endpoint
 					if login: # did we pass the test?
-						print("logged in!") # TODO: print who we are?
+						logger.log("logged in!") # TODO: print who we are?
 						return token, login.json() # returning token for future reference, as well as json for debugging/other info (system/info has some useful stuff!)
 				except Exception as e:
 					# oh no.
-					print(e)
+					logger.critical(e)
 
 			elif not token and (username and password): # user login
-				print(f"logging in as {username}...")
+				logger.info(f"logging in as {username}...")
 				login = self.sess.post(f"{server}/Users/AuthenticateByName", json={'Username': username, 'Pw': password})
 				if login.status_code == 200:
 					logs = login.json()
-					print(f"logged in as {logs['User']['Name']}!")
+					logger.info(f"logged in as {logs['User']['Name']}!")
 					return login.json()['AccessToken'] # because we're feeling nice today
 		else:
 			# uh oh!
@@ -130,12 +130,12 @@ class JellyfinWS:
 		return utils.format_to_schema(input, "aa.json")
 
 	async def _listen(self, schema_format:bool=True): # yea i'd like a schema thanks
-		print(f"connecting to {server.replace("https", "wss",)}")
+		logger.debug(f"connecting to {server.replace("https", "wss",)}")
 		async with connect(self.server) as ws:
 			# HACK: :(
 			self._ws = ws # expose websocket for subscribe()
 			self._event.set() # signal that we're ready
-			print("connected!")
+			logger.info("connected!")
 			async for message in ws:
 				temp = json.loads(message)
 				if temp['MessageType'] == "ForceKeepAlive": # ping
@@ -167,10 +167,10 @@ class JellyfinWS:
 		if type(event_type) == list:
 			for event in event_type:
 				await self._ws.send(json.dumps({"MessageType": event_type, "Data": f"0,{interval_ms}" }))
-			print(f"subscribed to events {event_type} with interval of {interval_ms}ms")
+			logger.info(f"subscribed to events {event_type} with interval of {interval_ms}ms")
 		else:
 			await self._ws.send(json.dumps({"MessageType": event_type, "Data": f"0,{interval_ms}" }))
-			print(f"subscribed to event {event_type} with interval of {interval_ms}ms")
+			logger.info(f"subscribed to event {event_type} with interval of {interval_ms}ms")
 
 if __name__ == '__main__':
 	#username = os.getenv("username")
