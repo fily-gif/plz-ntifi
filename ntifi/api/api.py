@@ -58,7 +58,7 @@ class Jellyfin:
 	"""
 	def __init__(self, creds:dict=None):
 		self.creds = creds or None # optional credentials from an already logged-in state,
-		# TODO: implement auth saving for future usage (take inspiration from official api?)
+		# TODO: implement auth caching for future usage (take inspiration from official api?)
 		#(i.e server, token, optional user+pw if that was used instead of token) (note: server returns token when logging in!)
 		self.sess = requests.Session()
 
@@ -70,12 +70,11 @@ class Jellyfin:
 		"""
 
 		# set jellyfin-specific headers, token or none for auth because we're providing our own (unless user provides it!)
-		self.sess.headers.update({'User-Agent': "fily-github-com/1.0", "Authorization": f"MediaBrowser Client=\"{token or None}\", Device=\"Python\", DeviceId=\"PyJfinApi\", Version=\"10.11.6\""})
+		self.sess.headers.update({'User-Agent': "com.fily.github/1.0; plz-ntifi/1.0", "Authorization": f"MediaBrowser Client=\"{token or None}\", Device=\"Python\", DeviceId=\"PyJfinApi\", Version=\"10.11.6\""})
 		token: str # we'll be editing this later to be whatever the hell we got from auth for future requests
 		#...(really, all we need from auth is the token for websocket connection, since the flow is auth("sjkdfhjkfg") -> connect() lol)
 
-		# we might as well try to `ping` the root endpoint itself, but this is the "proper"-er way of doing this
-		#...also its almost midnight and i want to get just the class rewrite out lol (even if it doesnt work)
+		# check if the server is valid by simply requesting a public endpoint and expecting 200
 		server_is_valid: bool = self.sess.get(f"{server}/System/Info/Public").status_code == 200
 		if server_is_valid:
 			if token and not (username and password):
@@ -83,7 +82,7 @@ class Jellyfin:
 				try:
 					login = self.sess.get(f"{server}/System/Info") # GETing an authed endpoint
 					if login: # did we pass the test?
-						logger.log("logged in!") # TODO: print who we are?
+						logger.info("logged in!") # TODO: print who we are?
 						return token, login.json() # returning token for future reference, as well as json for debugging/other info (system/info has some useful stuff!)
 				except Exception as e:
 					# oh no.
@@ -134,7 +133,7 @@ class JellyfinWS:
 		async with connect(self.server) as ws:
 			# HACK: :(
 			self._ws = ws # expose websocket for subscribe()
-			self._event.set() # signal that we're ready
+			self._event.set() # signal that we're ready (-> required for subscribe() to function since we're async)
 			logger.info("connected!")
 			async for message in ws:
 				temp = json.loads(message)
@@ -164,7 +163,9 @@ class JellyfinWS:
 		"""
 		# TODO: make an enum(?) of all possible ws events
 		await self._event.wait() # im waiting and waiting and waiting and waiting for you 🗣️🗣️🗣️🗣️
-		if type(event_type) == list:
+		# WARN: LIST IS UNUSED AND IS KEPT JUST IN CASE. THEREFORE, IT IS UNTESTED!
+		if type(event_type) == list: # ideally, you'd want separate flows for different events, but just in case the user is stubborn,
+			#we're allowing them to do this
 			for event in event_type:
 				await self._ws.send(json.dumps({"MessageType": event_type, "Data": f"0,{interval_ms}" }))
 			logger.info(f"subscribed to events {event_type} with interval of {interval_ms}ms")

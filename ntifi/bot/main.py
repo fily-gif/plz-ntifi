@@ -26,28 +26,45 @@ async def ping(ctx):
 	await ctx.send(f':pong: pong! ({round(bot.latency*1000, 2)})')
 
 @bot.slash_command()
+@commands.check_any(commands.is_owner(), is_guild_owner())
 async def event_subscribe(ctx, event, timing:int="1000"): # timing is in ms!!
 	await ctx.response.defer()
-	await ws.subscribe(f"{event}", timing) # str'ing just in case
+	await ws.subscribe(str({event}), timing) # str'ing just in case
+	print(event, _event, timing)
 	await ctx.send(f"subscribed to {event} with {timing}ms interval!", ephemeral=True)
 	_event = event
+	print(event, _event, timing)
 	
 
 @bot.slash_command()
 @commands.check_any(commands.is_owner(), is_guild_owner())
 async def set_channel(ctx, channel: nextcord.TextChannel):
-	_channel = channel.id # TODO: use this
+	_channel = channel.id
 	await ctx.send(f"set channel to <#{channel.id}>! ({channel.id})")
+	await _channel.send("this channel has been subscribed to for jellyfin events!")
+	#print(channel.id, _channel)
 
 @bot.slash_command()
+@commands.check_any(commands.is_owner(), is_guild_owner())
 async def start_tracking(ctx):
 	#print(ctx)
 	#print(dir(ctx))
 	#print(dir(ctx.send))
-	await ctx.send(f"all {_event} events will be sent here!!") # FIXME: _event is empty? (not even None...)
+	channel = bot.get_channel(_channel)
+	await channel.send(f"all {_event} events will be sent here!!") # FIXME: _event is empty? (not even None...)
 	async for message in events:
-		print(list(message))
+		message = message[0]
+		print(message)
+		embed = nextcord.embed(title="Jellyfin", color=nextcord.Colour.greyple)
+		embed.add_field("test", message['data']['nowPlaying']['name'])
 		#await ctx.channel.send(list(message[0])) # we dont want it to reply to the initial message lol
+
+@bot.slash_command()
+@commands.check_any(commands.is_owner())
+async def stop(ctx):
+	await ctx.send("stopping...", ephemeral=True)
+	await bot.close() # close the connection
+	exit(0) # explicit 0 just in case
 
 @bot.event
 async def on_ready():

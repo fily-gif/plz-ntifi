@@ -13,7 +13,8 @@ def ticks_to_dt(ticks:int):
 
 	# str-ify and do funny cat face for .mmm
 	formatted = str(delta)[:-3]
-	return formatted
+	return formatted # NOTE: yes this means that we cant do further datetime operation with this unless
+	#we're parsing this again, but the thing is, we dont need to anymore.
 
 def format_to_schema(api, fp=None):
 	"""Takes in a raw api response,
@@ -59,10 +60,10 @@ def format_to_schema(api, fp=None):
 			if fp:
 				with open(fp, "w") as f:
 					json.dump(schema, f, indent=2, ensure_ascii=False)
-			return schema, True # schema alongside True because it (the rest) needs to know if this is a schema or api_resp
+			return schema, True # schema alongside True because it (the "front"end) needs to know if this is a schema (tw: jank!)
 		else:
 			print("not proper Sessions!")
-			pass#return
+			pass
 	except Exception as e:
 		traceback.print_exc(file=sys.stdout)
 		for line in traceback.format_tb(e.__traceback__):
