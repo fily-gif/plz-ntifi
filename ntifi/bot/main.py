@@ -59,12 +59,15 @@ async def start_tracking(ctx):
 	await channel.send(f"all {stored_event} events will be sent here!!")
 	await ws._event.wait() # HACK: another race condition! using internal wait() to wait for websocket to actually connect :fear:
 	async for message in events:
-		message = message[0]
-		print(message)
-		embed = nextcord.Embed(title="Jellyfin", color=int("1273f3", 16))
-		embed.add_field(name="test", value=message['data']['nowPlaying']['name'])
-		await channel.send(embed=embed)
-		await channel.send("a")
+		if message[1]:
+			message = message[0]
+			print(message)
+			embed = nextcord.Embed(color=int("6cf067", 16))
+			embed.set_author(name=str(message['data']['nowPlaying']['name']), url=f"{server}/web/index.html#/details?id={message['data']['nowPlaying']['id']}")
+			embed.add_field(name="paused" if message['data']['playState']['isPaused'] else "playing", value=message['data']['playState']['positionTicksFormatted'])
+			await channel.send(embed=embed)
+		continue
+		#await channel.send("a")
 		#await ctx.channel.send(list(message[0])) # we dont want it to reply to the initial message lol
 
 @bot.slash_command()
