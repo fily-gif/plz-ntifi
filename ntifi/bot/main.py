@@ -13,8 +13,8 @@ server = os.getenv("server")
 fin = api.Jellyfin()
 token = fin.auth(token=api_key)
 
-_channel = ""
-_event = ""
+target_channel = None
+stored_event = ""
 
 def is_guild_owner():
     def predicate(ctx):
@@ -28,42 +28,50 @@ async def ping(ctx):
 @bot.slash_command()
 @commands.check_any(commands.is_owner(), is_guild_owner())
 async def event_subscribe(ctx, event, timing:int="1000"): # timing is in ms!!
+	global stored_event # apparently we need to do these _inside_ the functions to make them edit the _global_ stored_event/target_channel. huh.
+	stored_event = event
 	await ctx.response.defer()
-	await ws.subscribe(str({event}), timing) # str'ing just in case
-	print(event, _event, timing)
+	await ws.subscribe(str(event), timing) # str'ing just in case
+	#print(event, _event, timing)
 	await ctx.send(f"subscribed to {event} with {timing}ms interval!", ephemeral=True)
-	_event = event
-	print(event, _event, timing)
-	
 
 @bot.slash_command()
 @commands.check_any(commands.is_owner(), is_guild_owner())
 async def set_channel(ctx, channel: nextcord.TextChannel):
-	_channel = channel.id
-	await ctx.send(f"set channel to <#{channel.id}>! ({channel.id})")
-	await _channel.send("this channel has been subscribed to for jellyfin events!")
+	global target_channel
+	global stored_event
+	target_channel = channel.id
+	_channel = bot.get_channel(target_channel) # ..?
+	#print(target_channel, _channel or None)
+	await ctx.send(f"set channel to <#{target_channel}>! ({target_channel})")
+	await _channel.send("-# this channel has been subscribed to for jellyfin events!")
 	#print(channel.id, _channel)
 
 @bot.slash_command()
 @commands.check_any(commands.is_owner(), is_guild_owner())
 async def start_tracking(ctx):
-	#print(ctx)
-	#print(dir(ctx))
-	#print(dir(ctx.send))
-	channel = bot.get_channel(_channel)
-	await channel.send(f"all {_event} events will be sent here!!") # FIXME: _event is empty? (not even None...)
+	global target_channel
+	global stored_event
+	#print(target_channel)
+	channel = bot.get_channel(target_channel)
+	#print(channel, target_channel or None)
+	print(stored_event or None)
+	await channel.send(f"all {stored_event} events will be sent here!!")
+	await ws._event.wait() # HACK: another race condition! using internal wait() to wait for websocket to actually connect :fear:
 	async for message in events:
 		message = message[0]
 		print(message)
-		embed = nextcord.embed(title="Jellyfin", color=nextcord.Colour.greyple)
-		embed.add_field("test", message['data']['nowPlaying']['name'])
+		embed = nextcord.Embed(title="Jellyfin", color=int("1273f3", 16))
+		embed.add_field(name="test", value=message['data']['nowPlaying']['name'])
+		await channel.send(embed=embed)
+		await channel.send("a")
 		#await ctx.channel.send(list(message[0])) # we dont want it to reply to the initial message lol
 
 @bot.slash_command()
 @commands.check_any(commands.is_owner())
 async def stop(ctx):
 	await ctx.send("stopping...", ephemeral=True)
-	await bot.close() # close the connection
+	await bot.close() # close the connection so that we dont just abruptly close the websocket (bad!)
 	exit(0) # explicit 0 just in case
 
 @bot.event
