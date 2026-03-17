@@ -42,7 +42,7 @@ def format_to_schema(api, fp=None):
 					'lastPaused': data.get('LastPausedDate', None),
 					'deviceName': data['DeviceName'],
 					'nowPlaying': {
-						'name': data['NowPlayingItem']['Name'],
+						'name': data['NowPlayingItem']['Name'], # name of the episode
 						'id': data['NowPlayingItem']['Id'],
 						'totalTicks': data['NowPlayingItem']['RunTimeTicks'],
 						'totalTicksFormatted': ticks_to_dt(data['NowPlayingItem']['RunTimeTicks']),

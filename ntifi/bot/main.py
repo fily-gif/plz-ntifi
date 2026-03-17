@@ -54,21 +54,21 @@ async def start_tracking(ctx):
 	global stored_event
 	#print(target_channel)
 	channel = bot.get_channel(target_channel)
-	#print(channel, target_channel or None)
 	print(stored_event or None)
 	await channel.send(f"all {stored_event} events will be sent here!!")
 	await ws._event.wait() # HACK: another race condition! using internal wait() to wait for websocket to actually connect :fear:
 	async for message in events:
-		if message[1]:
+		if message[1]: # if True
 			message = message[0]
 			print(message)
-			embed = nextcord.Embed(color=int("6cf067", 16))
-			embed.set_author(name=str(message['data']['nowPlaying']['name']), url=f"{server}/web/index.html#/details?id={message['data']['nowPlaying']['id']}")
+			embed = nextcord.Embed(color=int("e0f0e3", 16))
+			embed.set_author(name=str(message['data']['nowPlaying']['name']) if message['data']['nowPlaying']['type'] != "Movie" else f"{message['data']['nowPlaying']['name']} - S{message['data']['nowPlaying']['season']}E{message['data']['nowPlaying']['episode']} ~ '{message['data']['nowPlaying']['name']}'", url=f"{server}/web/index.html#/details?id={message['data']['nowPlaying']['id']}")
 			embed.add_field(name="paused" if message['data']['playState']['isPaused'] else "playing", value=message['data']['playState']['positionTicksFormatted'])
+			embed.set_thumbnail(f"{server}/Items/{message['data']['nowPlaying']['id']}/Images/Primary")
+			embed.set_footer(f"{message['data']['userName']}")
 			await channel.send(embed=embed)
 		continue
-		#await channel.send("a")
-		#await ctx.channel.send(list(message[0])) # we dont want it to reply to the initial message lol
+	await ctx.send("-# tracking started!", ephemeral=True) # we have to send something so that discord doesnt show an error
 
 @bot.slash_command()
 @commands.check_any(commands.is_owner())
