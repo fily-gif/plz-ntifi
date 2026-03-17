@@ -1,8 +1,9 @@
 import os
-import nextcord
-from nextcord.ext import commands
-from dotenv import load_dotenv
 import api
+import asyncio
+import nextcord
+from dotenv import load_dotenv
+from nextcord.ext import commands
 
 load_dotenv("../.env")
 intents = nextcord.Intents.all()
@@ -47,6 +48,25 @@ async def set_channel(ctx, channel: nextcord.TextChannel):
 	await _channel.send("-# this channel has been subscribed to for jellyfin events!")
 	#print(channel.id, _channel)
 
+async def _tracking_loop(channel):
+	await ws._event.wait()
+	async for message in events:
+		print(message)
+		try:
+			if message[1]: # if True
+				message = message[0]
+				print(message)
+				embed = nextcord.Embed(color=int("e0f0e3", 16))
+				embed.set_author(name=str(message['data']['nowPlaying']['name']) if message['data']['nowPlaying']['type'] != "Movie" else f"{message['data']['nowPlaying']['name']} - S{message['data']['nowPlaying']['season']}E{message['data']['nowPlaying']['episode']} ~ '{message['data']['nowPlaying']['name']}'", url=f"{server}/web/index.html#/details?id={message['data']['nowPlaying']['id']}")
+				embed.add_field(name="paused" if message['data']['playState']['isPaused'] else "playing", value=message['data']['playState']['positionTicksFormatted'])
+				embed.set_thumbnail(url=f"{server}/Items/{message['data']['nowPlaying']['id']}/Images/Primary")
+				embed.set_footer(text=f"{message['data']['userName']}")
+				await channel.send(embed=embed)
+			continue
+		except Exception as e:
+			print(f"AAAAAAAAAA {e}")
+			continue
+
 @bot.slash_command()
 @commands.check_any(commands.is_owner(), is_guild_owner())
 async def start_tracking(ctx):
@@ -57,25 +77,19 @@ async def start_tracking(ctx):
 	print(stored_event or None)
 	await channel.send(f"all {stored_event} events will be sent here!!")
 	await ws._event.wait() # HACK: another race condition! using internal wait() to wait for websocket to actually connect :fear:
-	async for message in events:
-		if message[1]: # if True
-			message = message[0]
-			print(message)
-			embed = nextcord.Embed(color=int("e0f0e3", 16))
-			embed.set_author(name=str(message['data']['nowPlaying']['name']) if message['data']['nowPlaying']['type'] != "Movie" else f"{message['data']['nowPlaying']['name']} - S{message['data']['nowPlaying']['season']}E{message['data']['nowPlaying']['episode']} ~ '{message['data']['nowPlaying']['name']}'", url=f"{server}/web/index.html#/details?id={message['data']['nowPlaying']['id']}")
-			embed.add_field(name="paused" if message['data']['playState']['isPaused'] else "playing", value=message['data']['playState']['positionTicksFormatted'])
-			embed.set_thumbnail(f"{server}/Items/{message['data']['nowPlaying']['id']}/Images/Primary")
-			embed.set_footer(f"{message['data']['userName']}")
-			await channel.send(embed=embed)
-		continue
 	await ctx.send("-# tracking started!", ephemeral=True) # we have to send something so that discord doesnt show an error
+	asyncio.create_task(_tracking_loop(channel)) # apparently this command sometimes(??????) freezes the entire script -> asyncio bullshit go
 
 @bot.slash_command()
 @commands.check_any(commands.is_owner())
 async def stop(ctx):
 	await ctx.send("stopping...", ephemeral=True)
-	await bot.close() # close the connection so that we dont just abruptly close the websocket (bad!)
-	exit(0) # explicit 0 just in case
+	#AI: boss im tired (clausde helped me specifically with asyncio stuff)
+	tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+	for task in tasks:
+		task.cancel()
+	await asyncio.gather(*tasks, return_exceptions=True)
+	await bot.close()
 
 @bot.event
 async def on_ready():
