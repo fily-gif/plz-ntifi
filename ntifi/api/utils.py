@@ -14,7 +14,7 @@ def ticks_to_dt(ticks:int):
 	# str-ify and do funny cat face for .mmm
 	formatted = str(delta)[:-3]
 	return formatted # NOTE: yes this means that we cant do further datetime operation with this unless
-	#we're parsing this again, but the thing is, we dont need to anymore.
+	#we're parsing this again, but we dont need to anymore anyways
 
 def format_to_schema(api, fp=None):
 	"""Takes in a raw api response,

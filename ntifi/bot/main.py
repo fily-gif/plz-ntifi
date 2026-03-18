@@ -62,9 +62,9 @@ def build_embed(message: dict) -> nextcord.Embed:
 async def ping(ctx):
 	await ctx.send(f'pong! ({round(bot.latency*1000, 2)})')
 
-@bot.slash_command()
+@bot.slash_command(description="unless youre doing something weird, you dont need to change the defaults.")
 @commands.check_any(commands.is_owner(), is_guild_owner())
-async def event_subscribe(ctx, event, timing: int = 1000): # timing is in ms!!
+async def event_subscribe(ctx, event: str = "SessionsStart", timing: int = 750): # timing is in ms!!
 	global stored_event
 	stored_event = event
 	await ctx.response.defer()
@@ -156,7 +156,7 @@ async def on_ready():
 	print("straight up socketing it")
 	global ws
 	global events
-	ws = fin.websocket(server, "discord")
+	ws = fin.websocket(server, f"discord ({bot.user};{bot.owner})")
 	events = ws.listen() # idle the connection idling on startup
 
 bot.run(bot_token)
