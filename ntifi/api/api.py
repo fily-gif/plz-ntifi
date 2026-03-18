@@ -119,31 +119,65 @@ class JellyfinWS:
 	# TODO: https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Model/Session/SessionMessageType.cs
 	def __init__(self, jellyfin: Jellyfin, server: str, device_id: str):
 		self.jellyfin = jellyfin
-		# assuming https because meh
-		self.server = server.replace("https://", "wss://")+f"/socket?api_key={api_key}&device_id={device_id}"
+		# normalize HTTP(S) to WS(S) and avoid accidental double slashes
+		server = server.rstrip("/")
+		if server.startswith("https://"):
+			server = server.replace("https://", "wss://", 1)
+		elif server.startswith("http://"):
+			server = server.replace("http://", "ws://", 1)
+		elif not server.startswith(("ws://", "wss://")):
+			server = f"wss://{server}"
+
+		self.server = f"{server}/socket?api_key={api_key}&device_id={device_id}"
 		self.device_id = device_id
 		self._event = asyncio.Event() # "connected event" event
 		self._queue = asyncio.Queue()
+		self._ws = None
+		self._subscriptions: list[tuple[str, int]] = []
 	
 	def schema(self, input): # lol
 		return utils.format_to_schema(input, "aa.json")
 
+	async def _send_subscription(self, event_type: str, interval_ms: int):
+		if not self._ws:
+			raise RuntimeError("websocket is not connected")
+		await self._ws.send(json.dumps({"MessageType": event_type, "Data": f"0,{interval_ms}"}))
+
 	async def _listen(self, schema_format:bool=True): # yea i'd like a schema thanks
-		logger.warn(f"connecting to {server.replace("https", "wss",)}")
-		async with connect(self.server) as ws:
-			# HACK: :(
-			self._ws = ws # expose websocket for subscribe()
-			self._event.set() # signal that we're ready (-> required for subscribe() to function since we're async)
-			logger.info("connected!")
-			async for message in ws:
-				temp = json.loads(message)
-				if temp['MessageType'] == "ForceKeepAlive": # ping
-					await ws.send(json.dumps({"MessageType": "KeepAlive"})) # pong
-					continue
-				if temp['MessageType'] == "KeepAlive": # we sent this
-					continue
-				logger.warn(message)
-				await self._queue.put(self.schema(message)) if schema_format else await self._queue.put(message)
+		while True:
+			try:
+				logger.warning(f"connecting to {self.server}")
+				async with connect(self.server) as ws:
+					self._ws = ws # expose websocket for subscribe()
+					self._event.set() # signal that we're ready (-> required for subscribe() to function since we're async)
+					logger.info("connected!")
+
+					# Re-apply any existing subscriptions after reconnect.
+					for event_type, interval_ms in self._subscriptions:
+						await self._send_subscription(event_type, interval_ms)
+						logger.info(f"re-subscribed to event {event_type} with interval of {interval_ms}ms")
+
+					async for message in ws:
+						try:
+							temp = json.loads(message)
+						except Exception:
+							logger.exception("failed to decode websocket message")
+							continue
+
+						msg_type = temp.get("MessageType")
+						if msg_type == "ForceKeepAlive": # ping
+							await ws.send(json.dumps({"MessageType": "KeepAlive"})) # pong
+							continue
+						if msg_type == "KeepAlive": # we sent this
+							continue
+
+						logger.warning(message)
+						await self._queue.put(self.schema(message)) if schema_format else await self._queue.put(message)
+			except Exception:
+				self._event.clear()
+				self._ws = None
+				logger.exception("websocket listener crashed; retrying in 2s")
+				await asyncio.sleep(2)
 	
 	def listen(self):
 		"""
@@ -164,14 +198,12 @@ class JellyfinWS:
 		# TODO: make an enum(?) of all possible ws events
 		await self._event.wait() # im waiting and waiting and waiting and waiting for you 🗣️🗣️🗣️🗣️
 		# WARN: LIST IS UNUSED AND IS KEPT JUST IN CASE. THEREFORE, IT IS UNTESTED!
-		if type(event_type) == list: # ideally, you'd want separate flows for different events, but just in case the user is stubborn,
-			#we're allowing them to do this
-			for event in event_type:
-				await self._ws.send(json.dumps({"MessageType": event_type, "Data": f"0,{interval_ms}" }))
-			logger.info(f"subscribed to events {event_type} with interval of {interval_ms}ms")
-		else:
-			await self._ws.send(json.dumps({"MessageType": event_type, "Data": f"0,{interval_ms}" }))
-			logger.info(f"subscribed to event {event_type} with interval of {interval_ms}ms")
+		events = event_type if isinstance(event_type, list) else [event_type]
+		for event in events:
+			if (event, interval_ms) not in self._subscriptions:
+				self._subscriptions.append((event, interval_ms))
+			await self._send_subscription(event, interval_ms)
+			logger.info(f"subscribed to event {event} with interval of {interval_ms}ms")
 
 if __name__ == '__main__':
 	#username = os.getenv("username")
