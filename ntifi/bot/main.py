@@ -82,39 +82,46 @@ async def set_channel(ctx, channel: nextcord.TextChannel):
 
 async def _tracking_loop(channel):
 	await ws._event.wait()
-	async for message in events:
-		print(message)
+	async for messages in events:
+		print(messages)
 		try:
-			if not message[1]: # we got garbage :(
+			# format_to_schema returns None in two cases:
+			#   1. no NowPlayingItem (e.g. SessionsStart with no active media)
+			#   2. an exception was raised inside it
+			# Both are non-actionable here, so skip instead of crashing on message[1].
+			if messages is None:
 				continue
-
-			message = message[0]
-			print(message)
-
-			user_id = message['data']['userId']
-			now = time.monotonic()
-
-			# --- Rate limiting ---
-			# If we updated this user's message too recently, drop the event.
-			# This keeps us well under Discord's 50 req/s global limit regardless
-			# of how frequently Jellyfin fires events or how many users are active.
-			# (^^^ thanks claude)
-			if (now - user_last_update.get(user_id, 0)) < MIN_UPDATE_INTERVAL:
+			
+			if not messages: # we got garbage :(
 				continue
+			
+			for message in messages:
+				print(message)
 
-			embed = build_embed(message)
+				user_id = message['data']['userId']
+				now = time.monotonic()
 
-			if user_id in user_messages:
-				# edit the embed instead of sending a new one
-				try:
-					await user_messages[user_id].edit(embed=embed)
-				except nextcord.NotFound:
-					# uh oh something broke! send a new one!
+				# --- Rate limiting ---
+				# If we updated this user's message too recently, drop the event.
+				# This keeps us well under Discord's 50 req/s global limit regardless
+				# of how frequently Jellyfin fires events or how many users are active.
+				# (^^^ thanks claude)
+				if (now - user_last_update.get(user_id, 0)) < MIN_UPDATE_INTERVAL:
+					continue
+
+				embed = build_embed(message)
+
+				if user_id in user_messages:
+					# edit the embed instead of sending a new one
+					try:
+						await user_messages[user_id].edit(embed=embed)
+					except nextcord.NotFound:
+						# uh oh something broke! send a new one!
+						user_messages[user_id] = await channel.send(embed=embed)
+				else:
 					user_messages[user_id] = await channel.send(embed=embed)
-			else:
-				user_messages[user_id] = await channel.send(embed=embed)
 
-			user_last_update[user_id] = time.monotonic()
+				user_last_update[user_id] = time.monotonic()
 
 		except Exception as e:
 			print(f"AAAAAAAAAA {e}")

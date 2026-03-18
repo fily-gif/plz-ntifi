@@ -22,13 +22,17 @@ def format_to_schema(api, fp=None):
 	and writes that to fp (optionally)"""
 	# TODO: TEST NOWPLAYING.TYPE TYPES TO SEE HOW DIFFERENT THE API RESPONSE IS
 	try:
+		print("got schema request!")
 		api_resp = json.loads(api)
+		results = []
 		#print(api_resp)
-		is_watching = bool(api_resp['Data'][0].get('NowPlayingItem'))
-		print(f"valid? {is_watching}")
-		data = api_resp['Data'][0]
+		data = api_resp['Data']
+		print(data)
 
-		if is_watching:
+		for data in api_resp['Data']:  # iterate ALL sessions, not just [0]
+			if not data.get('NowPlayingItem'):
+				continue  # skip idle sessions
+
 			schema = {
 				'messageId': api_resp['MessageId'],
 				'data': {
@@ -56,14 +60,15 @@ def format_to_schema(api, fp=None):
 					'eventType': api_resp['MessageType']
 				}
 			}
-			#print(api_resp['MessageType'])
-			if fp:
-				with open(fp, "w") as f:
-					json.dump(schema, f, indent=2, ensure_ascii=False)
-			return schema, True # schema alongside True because it (the "front"end) needs to know if this is a schema (tw: jank!)
-		else:
-			print("not proper Sessions!")
-			pass
+			results.append(schema)
+
+		if fp and results:
+			with open(fp, "w") as f:
+				json.dump(results, f, indent=2, ensure_ascii=False)
+		
+		print(results)
+		return results or None  # None if no active sessions 
+
 	except Exception as e:
 		traceback.print_exc(file=sys.stdout)
 		for line in traceback.format_tb(e.__traceback__):

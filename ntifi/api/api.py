@@ -78,7 +78,7 @@ class Jellyfin:
 		server_is_valid: bool = self.sess.get(f"{server}/System/Info/Public").status_code == 200
 		if server_is_valid:
 			if token and not (username and password):
-				logger.debug(f"using token to log in for {server}!") # FIXME: change all prints to logger!!
+				logger.warn(f"using token to log in for {server}!") # FIXME: change all prints to logger!!
 				try:
 					login = self.sess.get(f"{server}/System/Info") # GETing an authed endpoint
 					if login: # did we pass the test?
@@ -129,7 +129,7 @@ class JellyfinWS:
 		return utils.format_to_schema(input, "aa.json")
 
 	async def _listen(self, schema_format:bool=True): # yea i'd like a schema thanks
-		logger.debug(f"connecting to {server.replace("https", "wss",)}")
+		logger.warn(f"connecting to {server.replace("https", "wss",)}")
 		async with connect(self.server) as ws:
 			# HACK: :(
 			self._ws = ws # expose websocket for subscribe()
@@ -142,14 +142,14 @@ class JellyfinWS:
 					continue
 				if temp['MessageType'] == "KeepAlive": # we sent this
 					continue
-				#print(message)
+				logger.warn(message)
 				await self._queue.put(self.schema(message)) if schema_format else await self._queue.put(message)
 	
 	def listen(self):
 		"""
 		Connects to self.server (as defined in __init__().)
 		"""
-		asyncio.create_task(self._listen())
+		self._task = asyncio.create_task(self._listen())
 		return self._iter()
 
 	async def _iter(self):
