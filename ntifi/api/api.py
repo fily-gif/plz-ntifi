@@ -119,6 +119,12 @@ class JellyfinWS:
 	# TODO: https://github.com/jellyfin/jellyfin/blob/master/MediaBrowser.Model/Session/SessionMessageType.cs
 	def __init__(self, jellyfin: Jellyfin, server: str, device_id: str):
 		self.jellyfin = jellyfin
+		# Allow larger Jellyfin payloads (e.g. Sessions snapshots) than websockets' 1 MiB default.
+		max_size_env = os.getenv("ws_max_size_bytes", "4194304")
+		try:
+			self.ws_max_size = None if max_size_env.lower() == "none" else int(max_size_env)
+		except ValueError:
+			self.ws_max_size = 4194304
 		# normalize HTTP(S) to WS(S) and avoid accidental double slashes
 		server = server.rstrip("/")
 		if server.startswith("https://"):
@@ -147,7 +153,7 @@ class JellyfinWS:
 		while True:
 			try:
 				logger.warning(f"connecting to {self.server}")
-				async with connect(self.server) as ws:
+				async with connect(self.server, max_size=self.ws_max_size) as ws:
 					self._ws = ws # expose websocket for subscribe()
 					self._event.set() # signal that we're ready (-> required for subscribe() to function since we're async)
 					logger.info("connected!")
