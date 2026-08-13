@@ -4,7 +4,7 @@ import asyncio
 import logging
 import requests
 from dotenv import load_dotenv
-from . import utils
+from utils import *
 from websockets.asyncio.client import connect
 load_dotenv()
 server: str = (s := os.getenv("server")) and (s if s.startswith(("http://", "https://")) else f"https://{s}")
@@ -17,7 +17,7 @@ conf: list = [] # TODO: save in a file?
 handle = logging.StreamHandler()
 logger = logging.getLogger(__name__)
 fmt = "[%(levelname)s] (%(asctime)s) %(filename)s:%(funcName)s:%(lineno)d    %(message)s"
-logging.basicConfig(level=logging.INFO, handlers=[handle])
+logging.basicConfig(level=logging.DEBUG, handlers=[handle])
 
 #! https://alexandra-zaharia.github.io/posts/make-your-own-custom-color-formatter-with-python-logging/
 class CustomFormatter(logging.Formatter):
@@ -70,7 +70,7 @@ class Jellyfin:
 		"""
 
 		# set jellyfin-specific headers, token or none for auth because we're providing our own (unless user provides it!)
-		self.sess.headers.update({'User-Agent': "com.fily.github/1.0; plz-ntifi/1.0", "Authorization": f"MediaBrowser Client=\"{token or None}\", Device=\"Python\", DeviceId=\"PyJfinApi\", Version=\"10.11.6\""})
+		self.sess.headers.update({'User-Agent': "com.fily.github/1.0; plz-ntifi/1.0", "Authorization": f"MediaBrowser Client=\"{token or None}\", Device=\"Python\", DeviceId=\"PyJfinApi\", Version=\"10.11.6\"" + (f', Token="{token}"' if token else "")})
 		token: str # we'll be editing this later to be whatever the hell we got from auth for future requests
 		#...(really, all we need from auth is the token for websocket connection, since the flow is auth("sjkdfhjkfg") -> connect() lol)
 
@@ -78,7 +78,8 @@ class Jellyfin:
 		server_is_valid: bool = self.sess.get(f"{server}/System/Info/Public").status_code == 200
 		if server_is_valid:
 			if token and not (username and password):
-				logger.warn(f"using token to log in for {server}!") # FIXME: change all prints to logger!!
+				logger.warning(f"using token to log in for {server}!") # FIXME: change all prints to logger!!
+				logger.debug(f"(token is {token} (headers -> {self.sess.headers}))")
 				try:
 					login = self.sess.get(f"{server}/System/Info") # GETing an authed endpoint
 					if login: # did we pass the test?
@@ -90,6 +91,7 @@ class Jellyfin:
 
 			elif not token and (username and password): # user login
 				logger.info(f"logging in as {username}...")
+				logger.debug(f"{password}")
 				login = self.sess.post(f"{server}/Users/AuthenticateByName", json={'Username': username, 'Pw': password})
 				if login.status_code == 200:
 					logs = login.json()
@@ -212,9 +214,9 @@ class JellyfinWS:
 			logger.info(f"subscribed to event {event} with interval of {interval_ms}ms")
 
 if __name__ == '__main__':
-	#username = os.getenv("username")
-	#password = os.getenv("password")
-	#auth(api_key)
+	#username = "fily"#os.getenv("username")
+	#password = "5p)hE?gVG6e8*Ng"#os.getenv("password")
+	logging.warning(Jellyfin().auth(api_key))#username=username, password=password))
 	#auth(username=username, password=password)
-	#logging.critical("asdfdsd")
+	logging.critical("asdfdsd")
 	pass
