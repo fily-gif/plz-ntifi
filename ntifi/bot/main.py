@@ -1,4 +1,7 @@
 import os
+import sys
+# python imports are a mess
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "api"))
 import api
 import asyncio
 import time
@@ -78,7 +81,7 @@ async def set_channel(ctx, channel: nextcord.TextChannel):
 	target_channel = channel.id
 	_channel = bot.get_channel(target_channel)
 	await ctx.send(f"set channel to <#{target_channel}>! ({target_channel})")
-	await _channel.send("-# this channel has been subscribed to for jellyfin events!")
+	await _channel.send(f"-# this channel has been subscribed to for jellyfin events by {ctx.author.mention}!")
 
 async def _tracking_loop(channel):
 	await ws._event.wait()
@@ -156,7 +159,7 @@ async def on_ready():
 	print("straight up socketing it")
 	global ws
 	global events
-	ws = fin.websocket(server, f"discord ({bot.user};{bot.owner})")
+	ws = fin.websocket(server, "discord")
 	events = ws.listen() # idle the connection idling on startup
 
 bot.run(bot_token)
